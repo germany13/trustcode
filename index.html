@@ -1,0 +1,347 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>TrustCode</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;700&family=Onest:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* Концепция: тёмный «системный» интерфейс уведомлений. Один акцент — зелёный знак подлинности, он появляется только там, где есть проверка. */
+:root{
+  --bg:#f3f6f4; --surface:#ffffff; --surface2:#e8eeea; --fg:#0e1a16; --muted:#52645d;
+  --line:#cfd9d4; --ok:#0a8f54; --ok-bg:#d9f3e5; --bad:#c43d2f; --bad-bg:#fbe3df; --ink:#0e1a16; --on-ink:#f3f6f4;
+  --display:'Unbounded','Onest',system-ui,sans-serif; --body:'Onest',system-ui,sans-serif; --mono:'JetBrains Mono',ui-monospace,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0a1310; --surface:#111d18; --surface2:#16251f; --fg:#e8f1ec; --muted:#8fa69b;
+  --line:#243630; --ok:#3ddc8a; --ok-bg:#12372a; --bad:#ff7a6b; --bad-bg:#3a1a17; --ink:#e8f1ec; --on-ink:#0a1310; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0a1310; --surface:#111d18; --surface2:#16251f; --fg:#e8f1ec; --muted:#8fa69b;
+  --line:#243630; --ok:#3ddc8a; --ok-bg:#12372a; --bad:#ff7a6b; --bad-bg:#3a1a17; --ink:#e8f1ec; --on-ink:#0a1310; color-scheme:dark}
+html{color-scheme:light}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--body);font-size:16px;line-height:1.55;padding-inline:16px}
+*{box-sizing:border-box}
+img{max-width:100%}
+[hidden]{display:none!important}
+.wrap{max-width:1080px;margin:0 auto}
+h1,h2,h3{font-family:var(--display);font-weight:700;line-height:1.15;margin:0;text-wrap:balance}
+h1{font-size:clamp(1.9rem,5.2vw,3.4rem);letter-spacing:-.02em}
+h2{font-size:clamp(1.4rem,3.2vw,2rem);letter-spacing:-.01em}
+h3{font-size:1.02rem;font-weight:500}
+p{margin:0}
+a{color:inherit}
+.eyebrow{font-family:var(--mono);font-size:.76rem;letter-spacing:.12em;text-transform:uppercase;color:var(--ok)}
+:focus-visible{outline:2px solid var(--ok);outline-offset:3px;border-radius:4px}
+header.top{display:flex;align-items:center;justify-content:space-between;gap:16px;padding-block:20px;flex-wrap:wrap}
+.logo{display:flex;align-items:center;gap:10px;font-family:var(--display);font-weight:700;letter-spacing:.02em;text-decoration:none}
+.shield{width:30px;height:34px;flex:none}
+nav{display:flex;gap:20px;flex-wrap:wrap;font-size:.92rem}
+nav a{text-decoration:none;color:var(--muted)} nav a:hover{color:var(--fg)}
+.btn{display:inline-flex;align-items:center;gap:8px;font:600 .95rem var(--body);padding:12px 20px;border-radius:8px;border:1px solid var(--ink);background:var(--ink);color:var(--on-ink);text-decoration:none;cursor:pointer}
+.btn.ghost{background:transparent;color:var(--fg);border-color:var(--line)}
+.btn:hover{filter:brightness(1.12)} .btn[disabled]{opacity:.55;cursor:wait}
+section{padding-block:clamp(44px,8vw,88px)}
+.hero{display:grid;grid-template-columns:1.05fr .95fr;gap:clamp(24px,5vw,56px);align-items:center;padding-block:clamp(24px,5vw,56px) clamp(44px,7vw,80px)}
+.hero p.lead{color:var(--muted);font-size:1.12rem;max-width:34em;margin-top:20px}
+.hero .cta{display:flex;gap:12px;flex-wrap:wrap;margin-top:28px}
+.hero>*{min-width:0}
+/* push mock */
+.phone{background:var(--surface2);border:1px solid var(--line);border-radius:22px;padding:16px;display:grid;gap:12px}
+.phone-label{font-family:var(--mono);font-size:.72rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);display:flex;justify-content:space-between}
+.push{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:12px 14px;display:grid;gap:4px;font-size:.92rem}
+.push .head{display:flex;justify-content:space-between;gap:8px;font-size:.8rem;color:var(--muted)}
+.push .name{font-weight:600;color:var(--fg);display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.push.fake{border-color:var(--bad);background:var(--bad-bg)}
+.push.real{border-color:var(--ok);background:var(--ok-bg)}
+.tag{font-family:var(--mono);font-size:.68rem;padding:2px 7px;border-radius:99px;border:1px solid currentColor;letter-spacing:.04em;white-space:nowrap}
+.tag.ok{color:var(--ok)} .tag.bad{color:var(--bad)}
+.verdict{font-size:.84rem;color:var(--muted)}
+/* sections */
+.head2{display:grid;gap:12px;margin-bottom:32px;max-width:40em}
+.head2 p{color:var(--muted)}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.stat{border-top:2px solid var(--fg);padding-top:14px}
+.stat b{font-family:var(--display);font-size:clamp(1.8rem,4vw,2.6rem);display:block;line-height:1.05}
+.stat span{color:var(--muted);font-size:.92rem;display:block;margin-top:6px}
+.layers{display:grid;grid-template-columns:1fr 1fr;gap:0;border:1px solid var(--line);border-radius:14px;overflow:hidden}
+.layer{padding:clamp(20px,3vw,32px);display:grid;gap:10px;align-content:start;background:var(--surface)}
+.layer+.layer{background:var(--ink);color:var(--on-ink)}
+.layer .eyebrow{color:inherit;opacity:.75}
+.layer p{opacity:.85;font-size:.96rem}
+.layer ul{margin:4px 0 0;padding-left:18px;font-size:.93rem;opacity:.85}
+.rules{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.rule{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:20px;display:grid;gap:10px;align-content:start}
+.rule .state{font-family:var(--mono);font-size:.78rem;letter-spacing:.08em;text-transform:uppercase;display:flex;align-items:center;gap:8px}
+.dot{width:10px;height:10px;border-radius:50%;background:currentColor;flex:none}
+.rule.g .state{color:var(--ok)} .rule.y .state{color:#b7791f} .rule.r .state{color:var(--bad)}
+:root[data-theme="dark"] .rule.y .state{color:#f0b94a}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .rule.y .state{color:#f0b94a}}
+.rule p{color:var(--muted);font-size:.93rem}
+.eco{display:grid;grid-template-columns:repeat(4,1fr);gap:0;border:1px solid var(--line);border-radius:14px;overflow:hidden;background:var(--surface)}
+.eco div{padding:20px;display:grid;gap:8px;align-content:start;border-left:1px solid var(--line)}
+.eco div:first-child{border-left:0}
+.eco p{color:var(--muted);font-size:.9rem}
+.road{display:grid;gap:0;max-width:44em}
+.road li{list-style:none;display:grid;grid-template-columns:auto 1fr;gap:16px;padding:16px 0;border-top:1px solid var(--line)}
+.road li:last-child{border-bottom:1px solid var(--line)}
+.road .when{font-family:var(--mono);font-size:.8rem;color:var(--ok);padding-top:3px;min-width:5.5em}
+.road{margin:0;padding:0}
+/* presentation */
+.deck{display:grid;grid-template-columns:auto 1fr;gap:clamp(20px,4vw,48px);align-items:center;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:clamp(20px,4vw,40px)}
+.deck>*{min-width:0}
+.qr{background:#fff;padding:14px;border-radius:12px;border:1px solid var(--line);width:196px;height:196px;display:grid;place-items:center}
+.qr svg{width:100%;height:100%;display:block}
+.deck .links{display:flex;gap:12px;flex-wrap:wrap;margin-top:20px}
+.deck .url{font-family:var(--mono);font-size:.76rem;color:var(--muted);word-break:break-all;margin-top:14px}
+/* form */
+.form-grid{display:grid;grid-template-columns:.8fr 1.2fr;gap:clamp(24px,5vw,56px);align-items:start}
+.form-grid>*{min-width:0}
+form{display:grid;gap:16px;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:clamp(18px,3vw,32px)}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.row2>*{min-width:0}
+label{display:grid;gap:6px;font-size:.86rem;font-weight:500}
+label small{font-weight:400;color:var(--muted)}
+input,select,textarea{font:inherit;color:var(--fg);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:11px 12px;width:100%;min-width:0}
+textarea{min-height:110px;resize:vertical}
+input:focus,select:focus,textarea:focus{outline:2px solid var(--ok);outline-offset:1px;border-color:var(--ok)}
+.check{display:flex;gap:10px;align-items:flex-start;font-weight:400;color:var(--muted)}
+.check input{width:auto;margin-top:4px;flex:none}
+.err{color:var(--bad);font-size:.84rem;min-height:1.2em}
+.msg{border-radius:10px;padding:14px 16px;font-size:.94rem}
+.msg.ok{background:var(--ok-bg);color:var(--fg);border:1px solid var(--ok)}
+.msg.warn{background:var(--surface2);border:1px solid var(--line);color:var(--muted)}
+.admin{margin-top:28px;border-top:1px solid var(--line);padding-top:20px}
+.admin h3{margin-bottom:12px}
+.apps{display:grid;gap:10px}
+.app{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px 14px;font-size:.88rem;display:grid;gap:4px}
+.app b{font-weight:600}.app span{color:var(--muted)}
+.team{display:flex;gap:10px 28px;flex-wrap:wrap;color:var(--muted);font-size:.92rem;margin-top:14px}
+.team b{color:var(--fg);font-weight:500;display:block}
+footer{border-top:1px solid var(--line);padding-block:32px;color:var(--muted);font-size:.9rem;display:grid;gap:6px}
+footer .tagline{font-family:var(--display);color:var(--fg);font-size:1.05rem}
+@media (max-width:860px){
+  .hero,.form-grid,.layers,.deck{grid-template-columns:1fr}
+  .stats,.rules{grid-template-columns:1fr}
+  .eco{grid-template-columns:1fr 1fr}
+  .eco div:nth-child(3){border-left:0}
+  .eco div:nth-child(n+3){border-top:1px solid var(--line)}
+  .qr{width:180px;height:180px}
+}
+@media (max-width:480px){.row2{grid-template-columns:1fr}.eco{grid-template-columns:1fr}.eco div{border-left:0;border-top:1px solid var(--line)}.eco div:first-child{border-top:0}}
+@media (prefers-reduced-motion:no-preference){.push.real{animation:pop .6s ease-out both .2s}@keyframes pop{from{transform:translateY(6px);opacity:.4}to{transform:none;opacity:1}}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header class="top">
+  <a class="logo" href="#top" id="top">
+    <svg class="shield" viewBox="0 0 30 34" aria-hidden="true"><path d="M15 1.5 27.5 6v10.2c0 8.2-5.2 13.8-12.5 16.3C7.7 30 2.5 24.400 2.500 16.200V6L15 1.500Z" fill="var(--ok)"/><path d="m9.500 17 4 4 7.500-8.500" fill="none" stroke="var(--on-ink)" stroke-width="2.800" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    TRUSTCODE
+  </a>
+  <nav aria-label="Разделы"><a href="#how">Как работает</a><a href="#rules">Для пользователя</a><a href="#partners">Партнёры</a><a href="#deck">Презентация</a></nav>
+  <a class="btn" href="#apply">Подать заявку</a>
+</header>
+
+<main>
+<div class="hero">
+  <div>
+    <p class="eyebrow">Стандарт кибербезопасности</p>
+    <h1 style="margin-top:14px">Настоящее сообщение банка видно сразу</h1>
+    <p class="lead">TrustCode — единый защищённый знак подлинности для SMS и push-уведомлений финансовых организаций. Знак рисует сама операционная система, и только после проверки подписи отправителя. Подделать его в тексте сообщения нельзя.</p>
+    <div class="cta"><a class="btn" href="#apply">Подать заявку на пилот</a><a class="btn ghost" href="#deck">Смотреть презентацию</a></div>
+  </div>
+  <div class="phone" role="img" aria-label="Сравнение двух push-уведомлений: поддельного без знака и настоящего со знаком TC">
+    <div class="phone-label"><span>Шторка уведомлений</span><span>09:41</span></div>
+    <div class="push fake">
+      <div class="head"><span class="name">Апек Банк <span class="tag bad">нет знака TC</span></span><span>сейчас</span></div>
+      <div>Списание 45 000 ₽. Переведите средства на безопасный счёт.</div>
+      <div class="verdict">Имя и текст подделать легко. Знака нет, значит доверия нет.</div>
+    </div>
+    <div class="push real">
+      <div class="head"><span class="name">Апекс Банк <span class="tag ok">✓ TC · подлинность подтверждена</span></span><span>сейчас</span></div>
+      <div>Код для входа: 8492. Никому не сообщайте этот код.</div>
+      <div class="verdict">Рамку и знак отрисовала ОС после проверки подписи банка.</div>
+    </div>
+  </div>
+</div>
+
+<section id="problem" style="padding-top:0">
+  <div class="head2"><p class="eyebrow">Проблема</p><h2>Фейковое уведомление выглядит так же, как настоящее</h2>
+  <p>Мошенник копирует имя банка, цвета, логотип и тон сервисных сообщений. Операционная система не даёт человеку доказательства, откуда пришло сообщение. Предупреждения и иконки внутри самого текста больше не работают.</p></div>
+  <div class="stats">
+    <div class="stat"><b>20 %</b><span>защиты текста SMS от подмены имени отправителя</span></div>
+    <div class="stat"><b>100 %</b><span>фирменного стиля банка копируют мошенники</span></div>
+    <div class="stat"><b>1 клик</b><span>отделяет импульсивное решение от кражи средств и данных</span></div>
+  </div>
+</section>
+
+<section id="how">
+  <div class="head2"><p class="eyebrow">Как работает</p><h2>Код для машин. Смысл для людей.</h2>
+  <p>Сложная криптография работает на фоне. Человеку остаётся одно простое правило.</p></div>
+  <div class="layers">
+    <div class="layer"><span class="eyebrow">Уровень «Код»</span><h3>Серверы и сеть оператора</h3>
+      <p>Банк подписывает каждое уведомление цифровой подписью. Шлюзы отправки автоматически проверяют происхождение и целостность сообщения.</p>
+      <ul><li>подпись банка на стороне отправителя</li><li>проверка на уровне ОС и сотовых операторов</li><li>сообщение через «серый» шлюз теряет знак</li></ul></div>
+    <div class="layer"><span class="eyebrow">Уровень «Смысл»</span><h3>Интерфейс пользователя</h3>
+      <p>Знак TC появляется рядом с подтверждённым именем организации прямо в системной шторке. Анализировать текст не нужно.</p>
+      <ul><li>единый значок-щит для push и SMS</li><li>знак нельзя вставить в текст или картинку сообщения</li><li>если проверка не пройдена, показывается предупреждение</li></ul></div>
+  </div>
+</section>
+
+<section id="rules">
+  <div class="head2"><p class="eyebrow">Для пользователя</p><h2>Три правила вместо анализа текста</h2>
+  <p>Особенно важно для пожилых людей и тех, кому сложно разбираться в цифровых угрозах.</p></div>
+  <div class="rules">
+    <div class="rule g"><span class="state"><span class="dot"></span>Есть знак</span><h3>Безопасный сценарий</h3><p>Сообщение прошло проверку. Действовать можно в официальном приложении банка.</p></div>
+    <div class="rule y"><span class="state"><span class="dot"></span>Нет знака</span><h3>Пауза и проверка</h3><p>Остановитесь и откройте приложение банка вручную. Ссылкам и просьбам в тексте не доверяйте.</p></div>
+    <div class="rule r"><span class="state"><span class="dot"></span>Предупреждение</span><h3>Прямая угроза</h3><p>Не переходите по ссылке. Свяжитесь с организацией по официальному каналу.</p></div>
+  </div>
+</section>
+
+<section id="partners">
+  <div class="head2"><p class="eyebrow">Партнёрская экосистема</p><h2>Единый стандарт, а не набор разрозненных решений</h2>
+  <p>Стандарт работает, когда его поддерживают финансовый сектор, телеком и платформы.</p></div>
+  <div class="eco">
+    <div><h3>Банки</h3><p>Подписывают транзакционные и сервисные уведомления защищённым сертификатом.</p></div>
+    <div><h3>Операторы</h3><p>Маршрутизируют сообщения и подтверждают статус проверки в сетях SMS и RCS.</p></div>
+    <div><h3>Разработчики ОС</h3><p>Встраивают знак в системную шторку и экран блокировки.</p></div>
+    <div><h3>Пользователи</h3><p>Получают понятный сигнал доверия на любом смартфоне и у любого банка.</p></div>
+  </div>
+</section>
+
+<section id="roadmap">
+  <div class="head2"><p class="eyebrow">Дорожная карта</p><h2>Старт с пилота, потом рынок</h2>
+  <p>Пилот объединит несколько финансовых организаций, одного оператора связи и одну мобильную платформу. Горизонт проекта — 5 лет.</p></div>
+  <ul class="road">
+    <li><span class="when">Этап 1</span><span>Согласование протокола и ключевых требований к защите</span></li>
+    <li><span class="when">Этап 2</span><span>Пилотное тестирование на реальных SMS и push-сценариях</span></li>
+    <li><span class="when">Этап 3</span><span>Информационная кампания: одно простое правило для миллионов пользователей</span></li>
+  </ul>
+</section>
+
+<section id="deck">
+  <div class="deck">
+    <div class="qr" id="qr" role="img" aria-label="QR-код со ссылкой на презентацию TrustCode"></div>
+    <div>
+      <p class="eyebrow">Презентация</p>
+      <h2 style="margin-top:10px">Наведите камеру, чтобы открыть презентацию</h2>
+      <p style="color:var(--muted);margin-top:12px">QR-код ведёт на PDF-версию презентации проекта. Её удобно показать на встрече или отправить партнёру.</p>
+      <div class="links">
+        <a class="btn" id="deckLink" href="TrustCode.pdf" target="_blank" rel="noopener">Открыть презентацию</a>
+        <a class="btn ghost" href="Pitch.pdf" target="_blank" rel="noopener">Версия для защиты проекта</a>
+      </div>
+      <p class="url" id="deckUrl"></p>
+    </div>
+  </div>
+</section>
+
+<section id="apply">
+  <div class="form-grid">
+    <div>
+      <p class="eyebrow">Заявка</p>
+      <h2 style="margin-top:10px">Присоединяйтесь к пилоту</h2>
+      <p style="color:var(--muted);margin-top:14px">Расскажите, кого вы представляете. Мы вернёмся с деталями протокола и условиями участия.</p>
+      <div class="team">
+        <div><b>Михеева Мария</b>дизайнер</div><div><b>Ведерников Григорий</b>критик, идеолог</div><div><b>Чемеков Фёдор</b>спикер</div><div><b>Никифоров Михаил</b>лидер</div>
+      </div>
+    </div>
+    <div>
+      <form id="form" novalidate>
+        <div class="row2">
+          <label for="f-name">Имя<input id="f-name" name="name" autocomplete="name" required></label>
+          <label for="f-org">Организация<input id="f-org" name="org" autocomplete="organization" required></label>
+        </div>
+        <div class="row2">
+          <label for="f-type">Кто вы
+            <select id="f-type" name="type" required>
+              <option value="">Выберите</option><option>Банк или финансовая организация</option><option>Оператор связи</option><option>Разработчик ОС или платформы</option><option>Пользователь или другое</option>
+            </select></label>
+          <label for="f-contact">Почта или телефон<input id="f-contact" name="contact" autocomplete="email" required></label>
+        </div>
+        <label for="f-msg">Комментарий <small>(необязательно)</small><textarea id="f-msg" name="msg" placeholder="Например: хотим подключиться к пилоту. Какой канал важнее: SMS, push или оба?"></textarea></label>
+        <label class="check" for="f-ok"><input type="checkbox" id="f-ok"> Согласен на обработку указанных данных для связи по заявке</label>
+        <div class="err" id="err" role="alert"></div>
+        <div><button class="btn" id="send" type="submit">Отправить заявку</button></div>
+        <div id="result" aria-live="polite"></div>
+      </form>
+    </div>
+  </div>
+</section>
+</main>
+
+<footer>
+  <span class="tagline">Код для машин. Смысл для людей.</span>
+  <span>Команда «Код и смысл» · TrustCode · 2026</span>
+</footer>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
+<script>
+(function(){
+  // ====== НАСТРОЙКА ======
+  var ACCESS_KEY = "7669481e-086d-4e35-9ebc-dcc93563a9d9";   // ключ из письма от web3forms.com
+  var MAIL = "grishavedernikov13@gmail.com";    // куда приходят заявки (должна совпадать с почтой, на которую получен ключ)
+  // =======================
+
+  var url = (function(){ try{ return new URL("TrustCode.pdf", location.href).href; }catch(e){ return "TrustCode.pdf"; } })();
+  var el = document.getElementById("qr");
+  try{
+    var q = qrcode(0, "M"); q.addData(url); q.make();
+    el.innerHTML = q.createSvgTag({cellSize:4, margin:0, scalable:true});
+    var svg = el.querySelector("svg"); if(svg){ svg.removeAttribute("width"); svg.removeAttribute("height"); }
+  }catch(e){ el.textContent = "QR недоступен"; }
+  document.getElementById("deckUrl").textContent = url;
+
+  var form = document.getElementById("form"), err = document.getElementById("err"),
+      result = document.getElementById("result"), send = document.getElementById("send");
+
+  // Автоодобрение: в заявке есть просьба о подключении.
+  function wantsConnect(v){ return /подключ|присоедин|интегрир|connect/i.test((v.msg||"") + " " + (v.type||"")); }
+  function mailText(v){
+    return "Заявка TrustCode\nСтатус: "+(v.status==="approved"?"предварительно одобрена (просьба о подключении)":"на рассмотрении")+"\nИмя: "+v.name+"\nОрганизация: "+v.org+"\nТип: "+v.type+"\nКонтакт: "+v.contact+"\nКомментарий: "+(v.msg||"-");
+  }
+  function addMail(v){
+    var wrap = document.createElement("div"); wrap.style.marginTop = "12px";
+    var a = document.createElement("a"); a.className = "btn ghost";
+    a.href = "mailto:" + MAIL + "?subject=" + encodeURIComponent("Заявка TrustCode: " + v.org) + "&body=" + encodeURIComponent(mailText(v));
+    a.textContent = "Отправить письмом";
+    var hint = document.createElement("p"); hint.style.cssText = "margin-top:8px;font-size:.84rem;color:var(--muted)";
+    hint.textContent = "Если заявка не ушла, отправьте её письмом или напишите на " + MAIL + ".";
+    wrap.append(a, hint); result.append(wrap);
+  }
+
+  form.addEventListener("submit", async function(ev){
+    ev.preventDefault(); err.textContent = ""; result.textContent = ""; result.className = "";
+    var v = { name: form.name.value.trim(), org: form.org.value.trim(), type: form.type.value, contact: form.contact.value.trim(), msg: form.msg.value.trim() };
+    if(!v.name || !v.org || !v.type || !v.contact){ err.textContent = "Заполните имя, организацию, тип и контакт."; return; }
+    if(v.contact.length < 5){ err.textContent = "Укажите почту или телефон, по которому с вами можно связаться."; return; }
+    if(!document.getElementById("f-ok").checked){ err.textContent = "Нужно согласие на обработку данных."; return; }
+    v.status = wantsConnect(v) ? "approved" : "review";
+    send.disabled = true;
+    try{
+      var payload = {
+        access_key: ACCESS_KEY,
+        subject: "Заявка TrustCode: " + v.org + (v.status==="approved" ? " (одобрена автоматически)" : ""),
+        from_name: "Сайт TrustCode",
+        name: v.name, organization: v.org, type: v.type, contact: v.contact,
+        status: v.status === "approved" ? "предварительно одобрена (просьба о подключении)" : "на рассмотрении",
+        message: v.msg || "-"
+      };
+      var r = await fetch("https://api.web3forms.com/submit", {method:"POST", headers:{"Content-Type":"application/json","Accept":"application/json"}, body: JSON.stringify(payload)});
+      var j = await r.json();
+      if(!j.success) throw new Error(j.message || "fail");
+      form.reset();
+      result.className = "msg ok";
+      result.textContent = v.status === "approved"
+        ? "Заявка предварительно одобрена: вы просите о подключении. Спасибо, " + v.name + ". Мы свяжемся с вами по указанному контакту."
+        : "Заявка принята на рассмотрение. Спасибо, " + v.name + ". Мы свяжемся с вами по указанному контакту.";
+    }catch(e){
+      result.className = "msg warn";
+      result.textContent = "Не удалось отправить заявку. Данные не потеряны: отправьте их письмом.";
+      addMail(v);
+    }finally{ send.disabled = false; }
+  });
+})();
+</script>
+</body>
+</html>
