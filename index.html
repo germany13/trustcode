@@ -227,8 +227,7 @@ footer .tagline{font-family:var(--display);color:var(--fg);font-size:1.05rem}
       <h2 style="margin-top:10px">Наведите камеру, чтобы открыть презентацию</h2>
       <p style="color:var(--muted);margin-top:12px">QR-код ведёт на PDF-версию презентации проекта. Её удобно показать на встрече или отправить партнёру.</p>
       <div class="links">
-        <a class="btn" id="deckLink" href="TrustCode.pdf" target="_blank" rel="noopener">Открыть презентацию</a>
-        <a class="btn ghost" href="Pitch.pdf" target="_blank" rel="noopener">Версия для защиты проекта</a>
+        <a class="btn" id="deckLink" href="Presentation.pdf" target="_blank" rel="noopener">Открыть презентацию</a>
       </div>
       <p class="url" id="deckUrl"></p>
     </div>
@@ -283,7 +282,7 @@ footer .tagline{font-family:var(--display);color:var(--fg);font-size:1.05rem}
   var MAIL = "grishavedernikov13@gmail.com";    // куда приходят заявки (должна совпадать с почтой, на которую получен ключ)
   // =======================
 
-  var url = (function(){ try{ return new URL("TrustCode.pdf", location.href).href; }catch(e){ return "TrustCode.pdf"; } })();
+  var url = (function(){ try{ return new URL("Presentation.pdf", location.href).href; }catch(e){ return "Presentation.pdf"; } })();
   var el = document.getElementById("qr");
   try{
     var q = qrcode(0, "M"); q.addData(url); q.make();
